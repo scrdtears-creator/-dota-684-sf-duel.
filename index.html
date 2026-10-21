@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DOTA 6.84 — 1v1 Mid Prototype</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: #e8d9a8;
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      touch-action: none;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* ===== MENU ===== */
+    #menu {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #1a1520 0%, #0a0a0f 70%);
+      z-index: 10;
+    }
+
+    #menu::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(180, 40, 40, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(40, 80, 180, 0.12) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.2rem, 8vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #f0e6c8;
+      text-shadow:
+        0 0 20px rgba(200, 160, 60, 0.6),
+        0 4px 0 #3a2a10,
+        0 8px 20px rgba(0,0,0,0.8);
+      margin-bottom: 0.3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.9rem, 3vw, 1.3rem);
+      color: #a89060;
+      letter-spacing: 0.4em;
+      margin-bottom: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .patch-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #5a3a10, #3a2508);
+      border: 1px solid #c9a84c;
+      padding: 0.25rem 1rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: #e8d9a8;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .menu-btn {
+      background: linear-gradient(180deg, #3a2a18 0%, #1e150c 100%);
+      border: 2px solid #8a6a30;
+      color: #f0e6c8;
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.15em;
+      padding: 0.9rem 2.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      z-index: 1;
+      margin: 0.4rem;
+      min-width: 260px;
+      text-align: center;
+    }
+
+    .menu-btn:hover, .menu-btn:active {
+      background: linear-gradient(180deg, #5a4020 0%, #2e200f 100%);
+      border-color: #c9a84c;
+      box-shadow: 0 0 25px rgba(200, 160, 60, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .menu-btn.secondary {
+      font-size: 0.95rem;
+      padding: 0.6rem 2rem;
+      opacity: 0.85;
+    }
+
+    .footer-note {
+      position: absolute;
+      bottom: 1.5rem;
+      font-size: 0.7rem;
+      color: #5a5040;
+      letter-spacing: 0.1em;
+      z-index: 1;
+    }
+
+    /* ===== HERO SELECT ===== */
+    #heroSelect {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #1a1520 0%, #0a0a0f 70%);
+      z-index: 10;
+    }
+
+    .hs-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #e8d9a8;
+      letter-spacing: 0.2em;
+    }
+
+    .heroes-row {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2rem;
+      padding: 0 1rem;
+    }
+
+    .hero-card {
+      width: 140px;
+      background: linear-gradient(180deg, #2a2015 0%, #15100a 100%);
+      border: 2px solid #5a4020;
+      padding: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .hero-card:hover, .hero-card.selected {
+      border-color: #c9a84c;
+      box-shadow: 0 0 20px rgba(200, 160, 60, 0.35);
+      transform: translateY(-4px);
+    }
+
+    .hero-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 0.6rem;
+      border-radius: 50%;
+      border: 3px solid #6a5030;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      background: #1a1208;
+    }
+
+    .hero-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      color: #e8d9a8;
+      margin-bottom: 0.3rem;
+    }
+
+    .hero-role {
+      font-size: 0.7rem;
+      color: #8a7a50;
+    }
+
+    /* ===== HUD / GAME ===== */
+    #gameWrap {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #0d0d12;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #111;
+      image-rendering: pixelated;
+    }
+
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 0.5rem 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 5;
+      font-size: 0.85rem;
+      text-shadow: 0 1px 3px #000;
+    }
+
+    .hud-box {
+      background: rgba(10, 8, 5, 0.75);
+      border: 1px solid #5a4020;
+      padding: 0.4rem 0.8rem;
+      min-width: 110px;
+    }
+
+    .gold { color: #f0d060; }
+    .lh { color: #a0c0ff; }
+    .hp-bar-outer {
+      width: 100%;
+      height: 8px;
+      background: #300;
+      margin-top: 4px;
+      border: 1px solid #500;
+    }
+    .hp-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, #c03030, #e05050);
+      width: 100%;
+    }
+
+    #skills {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6rem;
+      z-index: 5;
+    }
+
+    .skill-btn {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(180deg, #2a2015, #15100a);
+      border: 2px solid #6a5030;
+      color: #e8d9a8;
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      position: relative;
+    }
+
+    .skill-btn:active, .skill-btn.ready:hover {
+      border-color: #c9a84c;
+      box-shadow: 0 0 12px rgba(200,160,60,0.4);
+    }
+
+    .skill-btn .cd {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    .skill-key {
+      font-size: 0.65rem;
+      color: #8a7a50;
+      margin-top: 2px;
+    }
+
+    #msg {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      color: #f0e6c8;
+      text-shadow: 0 0 20px #000, 0 4px 0 #3a2a10;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 20;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #controls-hint {
+      position: absolute;
+      bottom: 5.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: #6a5a40;
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #backBtn {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: rgba(30,20,10,0.8);
+      border: 1px solid #6a5030;
+      color: #c9a84c;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      z-index: 6;
+      pointer-events: auto;
+      font-family: 'Cinzel', serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- MAIN MENU -->
+    <div id="menu">
+      <div class="logo">DOTA</div>
+      <div class="subtitle">6.84 PROTOTYPE</div>
+      <div class="patch-badge">PATCH 6.84 · MID ONLY</div>
+      <button class="menu-btn" id="btnPlay">1v1 MID vs BOT</button>
+      <button class="menu-btn secondary" id="btnHow">КАК ИГРАТЬ</button>
+      <div class="footer-note">НЕОФИЦИАЛЬНЫЙ ПРОТОТИП · НЕ СВЯЗАН С VALVE</div>
+    </div>
+
+    <!-- HERO SELECT -->
+    <div id="heroSelect">
+      <div class="hs-title">ВЫБЕРИ ГЕРОЯ</div>
+      <div class="heroes-row" id="heroesRow"></div>
+      <button class="menu-btn" id="btnStartGame" disabled style="opacity:0.4">НАЧАТЬ ИГРУ</button>
+      <button class="menu-btn secondary" id="btnBackMenu" style="margin-top:0.8rem">НАЗАД</button>
+    </div>
+
+    <!-- GAME -->
+    <div id="gameWrap">
+      <canvas id="c"></canvas>
+      <div id="hud">
+        <div class="hud-box">
+          <div><span class="gold">●</span> <span id="gold">0</span></div>
+          <div><span class="lh">LH</span> <span id="lh">0</span></div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="hpBar"></div></div>
+        </div>
+        <div class="hud-box" style="text-align:right">
+          <div id="botName">BOT</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="botHpBar" style="background:linear-gradient(90deg,#2030a0,#4060e0)"></div></div>
+        </div>
+      </div>
+      <div id="skills"></div>
+      <div id="controls-hint">Клик / тап = движение · Q W E = скиллы · Атака автоматическая</div>
+      <button id="backBtn">МЕНЮ</button>
+      <div id="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===================== DATA =====================
+    const HEROES = [
+      {
+        id: 'sf',
+        name: 'Shadow Fiend',
+        icon: '🔥',
+        role: 'Carry · Mid',
+        color: '#c04040',
+        maxHp: 520,
+        dmg: 42,
+        range: 500,
+        speed: 2.6,
+        atkSpeed: 0.75,
+        skills: [
+          { key: 'Q', name: 'Raze', cd: 4, mana: 0, desc: 'Линия урона' },
+          { key: 'W', name: 'Raze', cd: 4, mana: 0, desc: 'Линия урона' },
+          { key: 'E', name: 'Raze', cd: 4, mana: 0, desc: 'Линия урона' }
+        ]
+      },
+      {
+        id: 'pudge',
+        name: 'Pudge',
+        icon: '🪝',
+        role: 'Offlane · Mid',
+        color: '#5a8a40',
+        maxHp: 750,
+        dmg: 55,
+        range: 150,
+        speed: 2.2,
+        atkSpeed: 0.9,
+        skills: [
+          { key: 'Q', name: 'Meat Hook', cd: 8, mana: 0, desc: 'Хук' },
+          { key: 'W', name: 'Rot', cd: 0, mana: 0, desc: 'Тогл урон' },
+          { key: 'E', name: 'Flesh Heap', cd: 0, mana: 0, desc: 'Пассивка' }
+        ]
+      },
+      {
+        id: 'lina',
+        name: 'Lina',
+        icon: '✨',
+        role: 'Mid · Nuker',
+        color: '#e07030',
+        maxHp: 480,
+        dmg: 38,
+        range: 670,
+        speed: 2.5,
+        atkSpeed: 0.7,
+        skills: [
+          { key: 'Q', name: 'Dragon Slave', cd: 6, mana: 0, desc: 'Волна огня' },
+          { key: 'W', name: 'Light Strike', cd: 7, mana: 0, desc: 'Стан' },
+          { key: 'E', name: 'Laguna Blade', cd: 20, mana: 0, desc: 'Ульт' }
+        ]
+      },
+      {
+        id: 'am',
+        name: 'Anti-Mage',
+        icon: '⚔️',
+        role: 'Carry',
+        color: '#6090c0',
+        maxHp: 560,
+        dmg: 48,
+        range: 150,
+        speed: 2.9,
+        atkSpeed: 0.65,
+        skills: [
+          { key: 'Q', name: 'Mana Break', cd: 0, mana: 0, desc: 'Пассивка' },
+          { key: 'W', name: 'Blink', cd: 6, mana: 0, desc: 'Блинк' },
+          { key: 'E', name: 'Spell Shield', cd: 0, mana: 0, desc: 'Пассивка' }
+        ]
+      }
+    ];
+
+    // ===================== STATE =====================
+    let selectedHero = null;
+    let game = null;
+    let animId = null;
+
+    // ===================== DOM =====================
+    const menu = document.getElementById('menu');
+    const heroSelect = document.getElementById('heroSelect');
+    const gameWrap = document.getElementById('gameWrap');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const msgEl = document.getElementById('msg');
+    const skillsEl = document.getElementById('skills');
+
+    // ===================== MENU LOGIC =====================
+    document.getElementById('btnPlay').onclick = () => {
+      menu.style.display = 'none';
+      heroSelect.style.display = 'flex';
+      renderHeroes();
+    };
+
+    document.getElementById('btnHow').onclick = () => {
+      alert(
+        'ПРОТОТИП 6.84 — 1v1 MID\n\n' +
+        '• Клик / тап по карте — движение\n' +
+        '• Авто-атака ближайшего врага в радиусе\n' +
+        '• Q / W / E — скиллы (или кнопки внизу)\n' +
+        '• Цель: убить бота или уничтожить его башню\n' +
+        '• Крипы спавнятся каждые 30 сек\n\n' +
+        'Это упрощённый веб-прототип, не настоящая Dota.'
+      );
+    };
+
+    document.getElementById('btnBackMenu').onclick = () => {
+      heroSelect.style.display = 'none';
+      menu.style.display = 'flex';
+      selectedHero = null;
+    };
+
+    document.getElementById('backBtn').onclick = () => {
+      stopGame();
+      gameWrap.style.display = 'none';
+      menu.style.display = 'flex';
+    };
+
+    function renderHeroes() {
+      const row = document.getElementById('heroesRow');
+      row.innerHTML = '';
+      HEROES.forEach(h => {
+        const card = document.createElement('div');
+        card.className = 'hero-card' + (selectedHero === h.id ? ' selected' : '');
+        card.innerHTML = `
+          <div class="hero-icon" style="border-color:${h.color}">${h.icon}</div>
+          <div class="hero-name">${h.name}</div>
+          <div class="hero-role">${h.role}</div>
+        `;
+        card.onclick = () => {
+          selectedHero = h.id;
+          renderHeroes();
+          const btn = document.getElementById('btnStartGame');
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        };
+        row.appendChild(card);
+      });
+    }
+
+    document.getElementById('btnStartGame').onclick = () => {
+      if (!selectedHero) return;
+      heroSelect.style.display = 'none';
+      gameWrap.style.display = 'block';
+      startGame(selectedHero);
+    };
+
+    // ===================== GAME =====================
+    function resize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function showMsg(text, duration = 2000) {
+      msgEl.textContent = text;
+      msgEl.style.opacity = '1';
+      setTimeout(() => { msgEl.style.opacity = '0'; }, duration);
+    }
+
+    function startGame(heroId) {
+      const heroData = HEROES.find(h => h.id === heroId);
+      const botData = HEROES.find(h => h.id !== heroId) || HEROES[0];
+
+      // Map constants (mid lane oriented)
+      const MAP = {
+        w: 1200,
+        h: 800,
+        laneY: 400,
+        riverX: 600,
+        towerRadii: 45
+      };
+
+      game = {
+        heroData,
+        botData,
+        player: {
+          x: 220, y: MAP.laneY,
+          hp: heroData.maxHp,
+          maxHp: heroData.maxHp,
+          gold: 625,
+          lh: 0,
+          facing: 1,
+          atkCd: 0,
+          skillsCd: [0, 0, 0],
+          rotOn: false,
+          target: null
+        },
+        bot: {
+          x: 980, y: MAP.laneY,
+          hp: botData.maxHp,
+          maxHp: botData.maxHp,
+          gold: 625,
+          lh: 0,
+          facing: -1,
+          atkCd: 0,
+          skillsCd: [0, 0, 0],
+          target: null,
+          aiTimer: 0
+        },
+        towers: [
+          { x: 160, y: MAP.laneY, hp: 1200, maxHp: 1200, team: 0, radius: 48 },
+          { x: 1040, y: MAP.laneY, hp: 1200, maxHp: 1200, team: 1, radius: 48 }
+        ],
+        creeps: [],
+        projectiles: [],
+        effects: [],
+        time: 0,
+        creepTimer: 5,
+        camX: 0,
+        camY: 0,
+        ended: false,
+        winner: null
+      };
+
+      // Build skill buttons
+      skillsEl.innerHTML = '';
+      heroData.skills.forEach((s, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'skill-btn';
+        btn.innerHTML = `<span>${s.key}</span><span class="skill-key">${s.name.slice(0,6)}</span><div class="cd" style="display:none"></div>`;
+        btn.onclick = (e) => { e.stopPropagation(); castSkill(i); };
+        skillsEl.appendChild(btn);
+      });
+
+      document.getElementById('botName').textContent = botData.name;
+      updateHud();
+
+      // Input
+      canvas.onpointerdown = onPointer;
+      window.onkeydown = onKey;
+
+      showMsg('ИГРА НАЧАЛАСЬ', 1500);
+      animId = requestAnimationFrame(loop);
+    }
+
+    function stopGame() {
+      if (animId) cancelAnimationFrame(animId);
+      animId = null;
+      canvas.onpointerdown = null;
+      window.onkeydown = null;
+      game = null;
+    }
+
+    function onPointer(e) {
+      if (!game || game.ended) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      // Convert to world
+      const wx = mx + game.camX;
+      const wy = my + game.camY;
+      game.player.target = { x: wx, y: wy };
+    }
+
+    function onKey(e) {
+      if (!game || game.ended) return;
+      const k = e.key.toLowerCase();
+      if (k === 'q') castSkill(0);
+      if (k === 'w') castSkill(1);
+      if (k === 'e') castSkill(2);
+    }
+
+    function castSkill(idx) {
+      if (!game || game.ended) return;
+      const p = game.player;
+      const h = game.heroData;
+      if (p.skillsCd[idx] > 0) return;
+
+      const skill = h.skills[idx];
+      p.skillsCd[idx] = skill.cd;
+
+      // Simple skill implementations
+      if (h.id === 'sf') {
+        // Raze: damage in a line in facing direction
+        const dir = p.facing;
+        const baseX = p.x + dir * 120;
+        spawnEffect(baseX, p.y, 90, '#ff4422', 0.4);
+        damageInRadius(baseX, p.y, 90, 95 + idx * 20, 1); // team 1 = enemy
+      } else if (h.id === 'pudge') {
+        if (idx === 0) { // Hook
+          const dir = p.facing;
+          game.projectiles.push({
+            x: p.x, y: p.y,
+            vx: dir * 9, vy: 0,
+            life: 0.7, dmg: 140, type: 'hook', team: 0
+          });
+        } else if (idx === 1) { // Rot toggle
+          p.rotOn = !p.rotOn;
+        }
+      } else if (h.id === 'lina') {
+        if (idx === 0) { // Dragon Slave
+          const dir = p.facing;
+          for (let i = 1; i <= 5; i++) {
+            const xx = p.x + dir * (80 * i);
+            spawnEffect(xx, p.y, 55, '#ff8844', 0.35);
+            damageInRadius(xx, p.y, 55, 70, 1);
+          }
+        } else if (idx === 1) { // Light Strike Array
+          const tx = p.target ? p.target.x : p.x + p.facing * 250;
+          const ty = p.target ? p.target.y : p.y;
+          spawnEffect(tx, ty, 80, '#ffcc44', 0.5);
+          setTimeout(() => damageInRadius(tx, ty, 80, 110, 1, true), 350);
+        } else if (idx === 2) { // Laguna
+          const target = findNearestEnemy(p.x, p.y, 700);
+          if (target) {
+            spawnEffect(target.x, target.y, 50, '#a0e0ff', 0.6);
+            target.hp -= 280;
+            if (target.hp <= 0) onKill(target);
+          }
+        }
+      } else if (h.id === 'am') {
+        if (idx === 1) { // Blink
+          const tx = p.target ? p.target.x : p.x + p.facing * 400;
+          const ty = p.target ? p.target.y : p.y;
+          const dx = tx - p.x, dy = ty - p.y;
+          const dist = Math.hypot(dx, dy);
+          const maxBlink = 420;
+          const scale = dist > maxBlink ? maxBlink / dist : 1;
+          p.x += dx * scale;
+          p.y += dy * scale;
+          p.target = null;
+          spawnEffect(p.x, p.y, 40, '#88aaff', 0.3);
+        }
+      }
+    }
+
+    function damageInRadius(x, y, r, dmg, enemyTeam, stun = false) {
+      // enemyTeam 1 = damage bot + his creeps/tower
+      if (enemyTeam === 1) {
+        if (Math.hypot(game.bot.x - x, game.bot.y - y) < r) {
+          game.bot.hp -= dmg;
+          if (game.bot.hp <= 0) onKill(game.bot);
+        }
+        game.creeps.forEach(c => {
+          if (c.team === 1 && Math.hypot(c.x - x, c.y - y) < r) {
+            c.hp -= dmg;
+            if (c.hp <= 0) onCreepKill(c, 0);
+          }
+        });
+        game.towers.forEach(t => {
+          if (t.team === 1 && Math.hypot(t.x - x, t.y - y) < r + t.radius * 0.5) {
+            t.hp -= dmg * 0.6;
+            if (t.hp <= 0) endGame(0);
+          }
+        });
+      }
+    }
+
+    function findNearestEnemy(x, y, range) {
+      let best = null, bestD = range;
+      const dBot = Math.hypot(game.bot.x - x, game.bot.y - y);
+      if (dBot < bestD) { best = game.bot; bestD = dBot; }
+      game.creeps.forEach(c => {
+        if (c.team === 1) {
+          const d = Math.hypot(c.x - x, c.y - y);
+          if (d < bestD) { best = c; bestD = d; }
+        }
+      });
+      return best;
+    }
+
+    function spawnEffect(x, y, r, color, life) {
+      game.effects.push({ x, y, r, color, life, maxLife: life });
+    }
+
+    function onKill(unit) {
+      if (unit === game.bot) {
+        endGame(0);
+      }
+    }
+
+    function onCreepKill(c, killerTeam) {
+      c.dead = true;
+      if (killerTeam === 0) {
+        game.player.gold += 35 + Math.floor(Math.random() * 15);
+        game.player.lh++;
+      } else {
+        game.bot.gold += 35;
+        game.bot.lh++;
+      }
+    }
+
+    function endGame(winner) {
+      game.ended = true;
+      game.winner = winner;
+      showMsg(winner === 0 ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ', 4000);
+    }
+
+    function updateHud() {
+      if (!game) return;
+      document.getElementById('gold').textContent = Math.floor(game.player.gold);
+      document.getElementById('lh').textContent = game.player.lh;
+      const hpPct = Math.max(0, game.player.hp / game.player.maxHp * 100);
+      document.getElementById('hpBar').style.width = hpPct + '%';
+      const botPct = Math.max(0, game.bot.hp / game.bot.maxHp * 100);
+      document.getElementById('botHpBar').style.width = botPct + '%';
+
+      // skill cds
+      const btns = skillsEl.querySelectorAll('.skill-btn');
+      game.player.skillsCd.forEach((cd, i) => {
+        const cdEl = btns[i]?.querySelector('.cd');
+        if (!cdEl) return;
+        if (cd > 0) {
+          cdEl.style.display = 'flex';
+          cdEl.textContent = Math.ceil(cd);
+        } else {
+          cdEl.style.display = 'none';
+        }
+      });
+    }
+
+    function spawnWave() {
+      // Radiant creeps (left)
+      for (let i = 0; i < 4; i++) {
+        game.creeps.push({
+          x: 180 + Math.random() * 30,
+          y: 400 + (i - 1.5) * 18,
+          hp: 320, maxHp: 320,
+          team: 0, speed: 1.1, dmg: 18, atkCd: 0, radius: 14
+        });
+      }
+      // Dire
+      for (let i = 0; i < 4; i++) {
+        game.creeps.push({
+          x: 1020 - Math.random() * 30,
+          y: 400 + (i - 1.5) * 18,
+          hp: 320, maxHp: 320,
+          team: 1, speed: 1.1, dmg: 18, atkCd: 0, radius: 14
+        });
+      }
+    }
+
+    function loop(ts) {
+      if (!game) return;
+      const dt = Math.min(0.033, (ts - (game.lastTs || ts)) / 1000);
+      game.lastTs = ts;
+      game.time += dt;
+
+      if (!game.ended) {
+        update(dt);
+      }
+      render();
+      updateHud();
+      animId = requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      const p = game.player;
+      const b = game.bot;
+      const MAP_W = 1200, MAP_H = 800, LANE = 400;
+
+      // Player movement toward target
+      if (p.target) {
+        const dx = p.target.x - p.x;
+        const dy = p.target.y - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 8) {
+          p.x += (dx / dist) * game.heroData.speed * 60 * dt;
+          p.y += (dy / dist) * game.heroData.speed * 60 * dt;
+          p.facing = dx > 0 ? 1 : -1;
+        } else {
+          p.target = null;
+        }
+      }
+      // Clamp
+      p.x = Math.max(40, Math.min(MAP_W - 40, p.x));
+      p.y = Math.max(80, Math.min(MAP_H - 80, p.y));
+
+      // Cooldowns
+      for (let i = 0; i < 3; i++) {
+        if (p.skillsCd[i] > 0) p.skillsCd[i] = Math.max(0, p.skillsCd[i] - dt);
+        if (b.skillsCd[i] > 0) b.skillsCd[i] = Math.max(0, b.skillsCd[i] - dt);
+      }
+      if (p.atkCd > 0) p.atkCd -= dt;
+      if (b.atkCd > 0) b.atkCd -= dt;
+
+      // Rot
+      if (p.rotOn && game.heroData.id === 'pudge') {
+        p.hp -= 15 * dt;
+        damageInRadius(p.x, p.y, 110, 25 * dt, 1);
+        spawnEffect(p.x, p.y, 100, 'rgba(80,180,60,0.15)', 0.1);
+      }
+
+      // Auto attack player
+      autoAttack(p, game.heroData, 0, dt);
+
+      // Bot AI
+      botAI(dt);
+
+      // Creeps
+      game.creepTimer -= dt;
+      if (game.creepTimer <= 0) {
+        game.creepTimer = 30;
+        spawnWave();
+      }
+
+      game.creeps = game.creeps.filter(c => !c.dead && c.hp > 0);
+      game.creeps.forEach(c => {
+        // Move toward opposite side along lane
+        const dir = c.team === 0 ? 1 : -1;
+        // Simple: go forward, attack nearest enemy
+        let nearest = null, nd = 9999;
+        // Check enemy creeps
+        game.creeps.forEach(o => {
+          if (o.team !== c.team) {
+            const d = Math.hypot(o.x - c.x, o.y - c.y);
+            if (d < nd) { nd = d; nearest = o; }
+          }
+        });
+        // Heroes
+        const enemyHero = c.team === 0 ? b : p;
+        const hd = Math.hypot(enemyHero.x - c.x, enemyHero.y - c.y);
+        if (hd < nd) { nd = hd; nearest = enemyHero; }
+        // Towers
+        const enemyTower = game.towers[c.team === 0 ? 1 : 0];
+        const td = Math.hypot(enemyTower.x - c.x, enemyTower.y - c.y);
+        if (td < nd) { nd = td; nearest = enemyTower; }
+
+        if (nearest && nd < 55) {
+          // Attack
+          if (c.atkCd <= 0) {
+            c.atkCd = 1.0;
+            if (nearest.hp !== undefined) {
+              nearest.hp -= c.dmg;
+              if (nearest.hp <= 0) {
+                if (nearest === p || nearest === b) {
+                  if (nearest === p) endGame(1);
+                  else endGame(0);
+                } else if (nearest.team !== undefined) {
+                  onCreepKill(nearest, c.team);
+                } else if (nearest.maxHp) { // tower
+                  if (nearest.hp <= 0) endGame(c.team === 0 ? 0 : 1);
+                }
+              }
+            }
+          } else {
+            c.atkCd -= dt;
+          }
+        } else {
+          c.x += dir * c.speed * 60 * dt;
+          // stay near lane
+          c.y += (LANE - c.y) * 0.02;
+        }
+      });
+
+      // Projectiles
+      game.projectiles.forEach(pr => {
+        pr.x += pr.vx;
+        pr.y += pr.vy;
+        pr.life -= dt;
+        // collision
+        if (pr.team === 0) {
+          if (Math.hypot(pr.x - b.x, pr.y - b.y) < 30) {
+            b.hp -= pr.dmg;
+            pr.life = 0;
+            if (b.hp <= 0) endGame(0);
+          }
+        }
+      });
+      game.projectiles = game.projectiles.filter(pr => pr.life > 0);
+
+      // Effects
+      game.effects.forEach(e => e.life -= dt);
+      game.effects = game.effects.filter(e => e.life > 0);
+
+      // Camera follow player
+      game.camX = p.x - canvas.width / 2;
+      game.camY = p.y - canvas.height / 2;
+      game.camX = Math.max(0, Math.min(MAP_W - canvas.width, game.camX));
+      game.camY = Math.max(0, Math.min(MAP_H - canvas.height, game.camY));
+    }
+
+    function autoAttack(unit, data, team, dt) {
+      if (unit.atkCd > 0) return;
+      // Find target in range
+      let target = null, best = data.range;
+      if (team === 0) {
+        // player attacks bot / creeps / tower
+        const dBot = Math.hypot(game.bot.x - unit.x, game.bot.y - unit.y);
+        if (dBot < best) { best = dBot; target = game.bot; }
+        game.creeps.forEach(c => {
+          if (c.team === 1) {
+            const d = Math.hypot(c.x - unit.x, c.y - unit.y);
+            if (d < best) { best = d; target = c; }
+          }
+        });
+        const tw = game.towers[1];
+        const dtower = Math.hypot(tw.x - unit.x, tw.y - unit.y);
+        if (dtower < best + tw.radius) { best = dtower; target = tw; }
+      }
+      if (target) {
+        unit.atkCd = data.atkSpeed;
+        unit.facing = target.x > unit.x ? 1 : -1;
+        target.hp -= data.dmg;
+        // visual
+        spawnEffect((unit.x + target.x) / 2, (unit.y + target.y) / 2, 12, '#fff', 0.15);
+        if (target.hp <= 0) {
+          if (target === game.bot) endGame(0);
+          else if (target.team === 1) onCreepKill(target, 0);
+          else if (target.maxHp && target.team === 1) endGame(0);
+        }
+      }
+    }
+
+    function botAI(dt) {
+      const b = game.bot;
+      const p = game.player;
+      const data = game.botData;
+      b.aiTimer -= dt;
+
+      // Simple: if low hp retreat a bit, else last hit / harass
+      if (b.hp < b.maxHp * 0.3) {
+        b.target = { x: 1050, y: 400 };
+      } else {
+        // Find low hp creep to last hit
+        let lastHit = null;
+        game.creeps.forEach(c => {
+          if (c.team === 0 && c.hp < data.dmg * 1.3) {
+            const d = Math.hypot(c.x - b.x, c.y - b.y);
+            if (d < data.range + 40) lastHit = c;
+          }
+        });
+        if (lastHit) {
+          b.target = { x: lastHit.x, y: lastHit.y };
+        } else if (Math.hypot(p.x - b.x, p.y - b.y) < 450) {
+          // Harass
+          b.target = { x: p.x, y: p.y };
+        } else {
+          // Farm mid
+          b.target = { x: 700, y: 400 };
+        }
+      }
+
+      // Move
+      if (b.target) {
+        const dx = b.target.x - b.x;
+        const dy = b.target.y - b.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 10) {
+          b.x += (dx / dist) * data.speed * 55 * dt;
+          b.y += (dy / dist) * data.speed * 55 * dt;
+          b.facing = dx > 0 ? 1 : -1;
+        }
+      }
+      b.x = Math.max(40, Math.min(1160, b.x));
+      b.y = Math.max(80, Math.min(720, b.y));
+
+      // Auto attack
+      if (b.atkCd <= 0) {
+        let target = null, best = data.range;
+        const dP = Math.hypot(p.x - b.x, p.y - b.y);
+        if (dP < best) { best = dP; target = p; }
+        game.creeps.forEach(c => {
+          if (c.team === 0) {
+            const d = Math.hypot(c.x - b.x, c.y - b.y);
+            if (d < best) { best = d; target = c; }
+          }
+        });
+        if (target) {
+          b.atkCd = data.atkSpeed;
+          target.hp -= data.dmg;
+          spawnEffect((b.x + target.x) / 2, (b.y + target.y) / 2, 10, '#aaf', 0.12);
+          if (target === p && target.hp <= 0) endGame(1);
+          if (target.team === 0 && target.hp <= 0) onCreepKill(target, 1);
+        }
+      }
+
+      // Occasional skill
+      if (b.aiTimer <= 0) {
+        b.aiTimer = 2 + Math.random() * 3;
+        if (Math.hypot(p.x - b.x, p.y - b.y) < 400 && b.skillsCd[0] <= 0) {
+          // Fake cast something visual
+          b.skillsCd[0] = 5;
+          spawnEffect(p.x, p.y, 70, data.color, 0.4);
+          p.hp -= 60;
+          if (p.hp <= 0) endGame(1);
+        }
+      }
+    }
+
+    function render() {
+      const w = canvas.width, h = canvas.height;
+      ctx.fillStyle = '#0d0d12';
+      ctx.fillRect(0, 0, w, h);
+
+      if (!game) return;
+      const cx = game.camX, cy = game.camY;
+      const MAP_W = 1200, MAP_H = 800;
+
+      // Ground
+      ctx.save();
+      ctx.translate(-cx, -cy);
+
+      // Base grass
+      ctx.fillStyle = '#1a2a18';
+      ctx.fillRect(0, 0, MAP_W, MAP_H);
+
+      // Lane
+      ctx.fillStyle = '#2a3a28';
+      ctx.fillRect(0, 340, MAP_W, 120);
+
+      // River
+      ctx.fillStyle = '#1a3048';
+      ctx.fillRect(560, 0, 80, MAP_H);
+      // river shine
+      ctx.fillStyle = 'rgba(60,120,180,0.15)';
+      ctx.fillRect(575, 0, 50, MAP_H);
+
+      // Trees / props simple
+      for (let i = 0; i < 18; i++) {
+        const tx = (i * 97 + 40) % MAP_W;
+        const ty = i % 2 === 0 ? 120 : 680;
+        ctx.fillStyle = '#0f1a0c';
+        ctx.beginPath();
+        ctx.arc(tx, ty, 22 + (i % 5), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Towers
+      game.towers.forEach(t => {
+        if (t.hp <= 0) return;
+        ctx.fillStyle = t.team === 0 ? '#4a6a30' : '#6a3040';
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#c9a84c';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        // hp
+        const pct = t.hp / t.maxHp;
+        ctx.fillStyle = '#222';
+        ctx.fillRect(t.x - 30, t.y - 65, 60, 7);
+        ctx.fillStyle = pct > 0.3 ? '#4c8' : '#c44';
+        ctx.fillRect(t.x - 30, t.y - 65, 60 * pct, 7);
+      });
+
+      // Creeps
+      game.creeps.forEach(c => {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+        ctx.fillStyle = c.team === 0 ? '#6a9a40' : '#9a4050';
+        ctx.fill();
+        // hp bar
+        const pct = c.hp / c.maxHp;
+        ctx.fillStyle = '#300';
+        ctx.fillRect(c.x - 12, c.y - 22, 24, 4);
+        ctx.fillStyle = '#4c4';
+        ctx.fillRect(c.x - 12, c.y - 22, 24 * pct, 4);
+      });
+
+      // Projectiles
+      game.projectiles.forEach(pr => {
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#c9a84c';
+        ctx.fill();
+      });
+
+      // Effects
+      game.effects.forEach(e => {
+        const a = e.life / e.maxLife;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r * (1.2 - a * 0.4), 0, Math.PI * 2);
+        ctx.fillStyle = e.color.replace(')', `,${a * 0.5})`).replace('rgb', 'rgba').replace('#', '');
+        // simple
+        ctx.globalAlpha = a * 0.6;
+        ctx.fillStyle = e.color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      // Bot
+      drawHero(game.bot, game.botData, true);
+      // Player
+      drawHero(game.player, game.heroData, false);
+
+      ctx.restore();
+
+      // Fog of war vignette
+      const grd = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.75);
+      grd.addColorStop(0, 'rgba(0,0,0,0)');
+      grd.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawHero(u, data, isBot) {
+      // body
+      ctx.beginPath();
+      ctx.arc(u.x, u.y, 22, 0, Math.PI * 2);
+      ctx.fillStyle = data.color;
+      ctx.fill();
+      ctx.strokeStyle = isBot ? '#a04050' : '#c9a84c';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // facing indicator
+      ctx.beginPath();
+      ctx.moveTo(u.x + u.facing * 22, u.y);
+      ctx.lineTo(u.x + u.facing * 34, u.y - 6);
+      ctx.lineTo(u.x + u.facing * 34, u.y + 6);
+      ctx.fillStyle = '#eee';
+      ctx.fill();
+
+      // name
+      ctx.fillStyle = '#e8d9a8';
+      ctx.font = '11px Cinzel, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isBot ? data.name : 'YOU', u.x, u.y - 32);
+
+      // hp
+      const pct = Math.max(0, u.hp / u.maxHp);
+      ctx.fillStyle = '#222';
+      ctx.fillRect(u.x - 22, u.y - 42, 44, 5);
+      ctx.fillStyle = isBot ? '#4060e0' : '#c04040';
+      ctx.fillRect(u.x - 22, u.y - 42, 44 * pct, 5);
+    }
+  </script>
+</body>
+</html>
